@@ -1,6 +1,6 @@
 const canvas = document.getElementById("gameCanvas");
-canvas.width = canvas.offsetWidth;
-canvas.height = canvas.offsetHeight;
+canvas.width = 1200;  // größeres Spielfeld
+canvas.height = 700;
 const ctx = canvas.getContext("2d");
 
 const scoreElement = document.getElementById("score");
@@ -16,7 +16,7 @@ let platformCounter = 0;
 const GRAVITY = 0.2;
 const JUMP_FORCE = -7;
 const PLATFORM_SPEED = 2;
-const POWERUP_DURATION = 30000;
+const POWERUP_DURATION = 20000;
 
 let normalGravity = GRAVITY;
 let activePowerupType = null;
@@ -35,7 +35,7 @@ let dino = {
 // Plattformen
 let platforms = [];
 
-// Power-Ups
+// Powerups
 const POWERUP_TYPES = ["doubleJump","lowGravity"];
 let nextPowerupAt = 20;
 let powerup = null;
@@ -47,7 +47,7 @@ let clouds = [];
 for(let i=0;i<5;i++){
     clouds.push({
         x: Math.random()*canvas.width,
-        y: 50 + i*60,
+        y: 50 + i*80,
         radiusX: 60,
         radiusY: 30,
         speed: 0.5 + Math.random()*0.5
@@ -57,47 +57,56 @@ for(let i=0;i<5;i++){
 // Plattformen erstellen
 function createInitialPlatforms(){
     platforms = [];
-    const startY = canvas.height*0.45;
-    platforms.push({x:0, y:startY, width:800});
+    const startY = canvas.height*0.5;
+    platforms.push({x:0, y:startY, width:800}); // Startplattform höher
     let x = 800;
-    while(x < canvas.width + 400){
-        const width = Math.random()*200 + 120;
+    while(x < canvas.width + 300){
+        const width = Math.random()*150 + 100;
         const y = Math.random()*100 + canvas.height*0.35;
         platforms.push({x, y, width});
         x += width + Math.random()*50 + 50;
     }
-    dino.y = platforms[0].y - dino.height - 10;
+    dino.y = platforms[0].y - dino.height;
 }
 
 // Steuerung
-document.addEventListener("keydown", e => {
-    if(!gameStarted && (e.code === "Space" || e.code === "ArrowUp")){
+function jump(){
+    if(!gameStarted){
         gameStarted = true;
         startOverlay.style.display = "none";
         requestAnimationFrame(gameLoop);
     }
-
-    if((e.code === "Space" || e.code === "ArrowUp") && dino.jumpsLeft > 0){
+    if(dino.jumpsLeft > 0){
         dino.dy = JUMP_FORCE;
         dino.jumpsLeft--;
     }
-    /*
-    if(e.code === "Digit1"){ // Low Gravity Cheat                                             #cheets
+}
+
+// Tastatur
+document.addEventListener("keydown", e => {
+    if(e.code === "Space" || e.code === "ArrowUp"){
+        jump();
+    }
+
+    // Cheat-Tasten
+    if(e.code === "Digit1"){ // Low Gravity
         normalGravity = 0.1;
         powerupActive = true;
         powerupTimer = POWERUP_DURATION;
         activePowerupType = "lowGravity";
     }
-    if(e.code === "Digit2"){ // Double Jump Cheat
+    if(e.code === "Digit2"){ // Double Jump
         dino.jumpsLeft = 2;
         powerupActive = true;
         powerupTimer = POWERUP_DURATION;
         activePowerupType = "doubleJump";
     }
-    */
 });
 
-// Restart
+// Klicksteuerung
+canvas.addEventListener("mousedown", jump);
+
+// Restart lädt Seite neu
 restartBtn.addEventListener("click", ()=>location.reload());
 
 // Plattform-Kollision
@@ -123,9 +132,9 @@ function maybeSpawnPowerup(){
         const type = POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)];
         powerup = {
             platform: plat,
-            offsetX: plat.width/2-15,
-            yOffset: -30,
-            size: 30,
+            offsetX: plat.width/2-20,
+            yOffset: -40,
+            size: 40,
             type: type,
             color: type==="doubleJump"?"#3498db":"#e74c3c"
         };
@@ -152,13 +161,14 @@ function updatePowerupCircle(){
     }
     powerupCircle.style.display="block";
     const percent = powerupTimer/POWERUP_DURATION;
+    powerupCircle.style.borderColor="#3498db";
     let color = activePowerupType==="lowGravity"?"#e74c3c":"#3498db";
     powerupCircle.style.background = `conic-gradient(${color} ${percent*360}deg, transparent 0deg)`;
 }
 
 // Hintergrund
 function drawBackground(){
-    ctx.fillStyle="#87CEEB";
+    ctx.fillStyle="#a0d8f1"; // heller Hintergrund
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
     clouds.forEach(cloud => {
@@ -167,8 +177,10 @@ function drawBackground(){
         ctx.ellipse(cloud.x, cloud.y, cloud.radiusX, cloud.radiusY, 0, 0, 2*Math.PI);
         ctx.fill();
 
-        cloud.x -= cloud.speed;
-        if(cloud.x + cloud.radiusX < 0) cloud.x = canvas.width + cloud.radiusX;
+        cloud.x -= cloud.speed; // Wolken von rechts nach links
+        if(cloud.x + cloud.radiusX < 0){
+            cloud.x = canvas.width + cloud.radiusX;
+        }
     });
 }
 
@@ -200,7 +212,7 @@ function gameLoop(){
     if(platforms[0].x + platforms[0].width < 0){
         platforms.shift();
         platformCounter++;
-        const width = Math.random()*200+120;
+        const width = Math.random()*150+100;
         const y = Math.random()*100+canvas.height*0.35;
         const lastX = platforms[platforms.length-1].x + platforms[platforms.length-1].width + Math.random()*50+50;
         platforms.push({x:lastX,y,width});
