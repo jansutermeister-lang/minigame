@@ -1,6 +1,6 @@
 const canvas = document.getElementById("gameCanvas");
-canvas.width = 1200;  // größeres Spielfeld
-canvas.height = 700;
+canvas.width = 1200;
+canvas.height = 650;
 const ctx = canvas.getContext("2d");
 
 const scoreElement = document.getElementById("score");
@@ -35,7 +35,7 @@ let dino = {
 // Plattformen
 let platforms = [];
 
-// Powerups
+// Power-Ups
 const POWERUP_TYPES = ["doubleJump","lowGravity"];
 let nextPowerupAt = 20;
 let powerup = null;
@@ -47,7 +47,7 @@ let clouds = [];
 for(let i=0;i<5;i++){
     clouds.push({
         x: Math.random()*canvas.width,
-        y: 50 + i*80,
+        y: 50 + i*60,
         radiusX: 60,
         radiusY: 30,
         speed: 0.5 + Math.random()*0.5
@@ -57,9 +57,9 @@ for(let i=0;i<5;i++){
 // Plattformen erstellen
 function createInitialPlatforms(){
     platforms = [];
-    const startY = canvas.height*0.5;
-    platforms.push({x:0, y:startY, width:800}); // Startplattform höher
-    let x = 800;
+    const startY = canvas.height*0.45;
+    platforms.push({x:0, y:startY, width:700});
+    let x = 700;
     while(x < canvas.width + 300){
         const width = Math.random()*150 + 100;
         const y = Math.random()*100 + canvas.height*0.35;
@@ -69,26 +69,26 @@ function createInitialPlatforms(){
     dino.y = platforms[0].y - dino.height;
 }
 
-// Steuerung
-function jump(){
+// Spiel starten
+function startGame(){
     if(!gameStarted){
         gameStarted = true;
         startOverlay.style.display = "none";
         requestAnimationFrame(gameLoop);
     }
-    if(dino.jumpsLeft > 0){
-        dino.dy = JUMP_FORCE;
-        dino.jumpsLeft--;
-    }
 }
 
-// Tastatur
+// Steuerung
 document.addEventListener("keydown", e => {
     if(e.code === "Space" || e.code === "ArrowUp"){
-        jump();
+        startGame();
+        if(dino.jumpsLeft > 0){
+            dino.dy = JUMP_FORCE;
+            dino.jumpsLeft--;
+        }
     }
 
-    // Cheat-Tasten
+    // Cheat-Powerups
     if(e.code === "Digit1"){ // Low Gravity
         normalGravity = 0.1;
         powerupActive = true;
@@ -103,8 +103,14 @@ document.addEventListener("keydown", e => {
     }
 });
 
-// Klicksteuerung
-canvas.addEventListener("mousedown", jump);
+// Klick auf Overlay startet Spiel
+startOverlay.addEventListener("click", () => startGame());
+canvas.addEventListener("click", () => {
+    if(gameStarted && dino.jumpsLeft > 0){
+        dino.dy = JUMP_FORCE;
+        dino.jumpsLeft--;
+    }
+});
 
 // Restart lädt Seite neu
 restartBtn.addEventListener("click", ()=>location.reload());
@@ -133,12 +139,12 @@ function maybeSpawnPowerup(){
         powerup = {
             platform: plat,
             offsetX: plat.width/2-20,
-            yOffset: -40,
+            yOffset: -35,
             size: 40,
             type: type,
             color: type==="doubleJump"?"#3498db":"#e74c3c"
         };
-        nextPowerupAt = platformCounter + 20;
+        nextPowerupAt = platformCounter + 20 + Math.floor(Math.random()*10);
     }
 }
 
@@ -168,7 +174,7 @@ function updatePowerupCircle(){
 
 // Hintergrund
 function drawBackground(){
-    ctx.fillStyle="#a0d8f1"; // heller Hintergrund
+    ctx.fillStyle="#87CEEB";
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
     clouds.forEach(cloud => {
